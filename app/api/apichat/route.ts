@@ -2,48 +2,83 @@ import { OpenAI } from "@langchain/openai";
 import { NextResponse } from "next/server";
 import { APIChain } from "langchain/chains";
 
+/* const ORDERS_API_DOCS = `
+BASE URL: http://localhost:3000/
+
+API Documentation
+The endpoint /api/orders retrieves a list of all orders in JSON format. This list can be filtered by certain criteria to get specific orders. 
+
+JSON Response Structure
+The JSON response is an array of objects representing individual orders. Each object contains the following fields:
+
+- order_id: Integer - Unique identifier for the order.
+- customer_name: String - Name of the customer who placed the order.
+- order_date: String (ISO 8601) - Date when the order was placed.
+- order_time: String - Time when the order was placed.
+- order_items: String - List of items in the order.
+- order_status: String - Current status of the order (e.g., "ready for dispatch", "packaged", "out for delivery", "delivered").
+- estimated_delivery: String (ISO 8601) - Estimated delivery date.
+- payment_type: String - Payment type (e.g., "Prepaid", "Cash on Delivery").
+- coins_used: Boolean - Indicates whether coins were used for payment.
+`; */
+
+const ORDERS_API_DOCS = `
+BASE URL: http://localhost:3000/
+
+API Documentation
+The endpoint /api/orders/{order_id} retrieves the details of a specific order given its order ID.
+
+Endpoint: /api/orders/{order_id}
+- Method: GET
+- Path Parameter:
+  - order_id: Integer - The unique identifier for the order.
+
+JSON Response Structure
+The JSON response is an object containing the following fields:
+
+- order_id: Integer - Unique identifier for the order.
+- customer_name: String - Name of the customer who placed the order.
+- order_date: String (ISO 8601) - Date when the order was placed.
+- order_time: String - Time when the order was placed.
+- order_items: String - List of items in the order.
+- order_status: String - Current status of the order (e.g., "ready for dispatch", "packaged", "out for delivery", "delivered").
+- estimated_delivery: String (ISO 8601) - Estimated delivery date.
+- payment_type: String - Payment type (e.g., "Prepaid", "Cash on Delivery").
+- coins_used: Boolean - Indicates whether coins were used for payment.
+
+Example Request
+- GET http://localhost:3000/api/orders/23599046
+
+Example Response
+\`
+{
+  "order_id": 23599046,
+  "customer_name": "Priyanka Sharma",
+  "order_date": "2024-04-03T18:30:00.000Z",
+  "order_time": "04:52:00",
+  "order_items": "Deltasone, Cefixime, Imatinib",
+  "order_status": "packaged",
+  "estimated_delivery": "2024-04-08T18:30:00.000Z",
+  "payment_type": "Cash on Delivery",
+  "coins_used": false
+}
+\`
+`;
 export async function GET() {
   try {
-    let orderId;
-    const OrderDetails = `BASE URL: http://localhost:3000/
-        API Documentation:
-        This API provides details about an order. When Provided with an order ID, it returns the order details.
-        If the order ID is not found, it returns an error message.
+    const model = new OpenAI({ model: "gpt-3.5-turbo-instruct" });
+    const chain = APIChain.fromLLMAndAPIDocs(model, ORDERS_API_DOCS, {
+      headers: {
+        // These headers will be used for API requests made by the chain.
+      },
+    });
 
-        GET /api/orders/${orderId}
-        Response: {
-            "order_id": id of the order (integer eg. 23599046),
-            "customer_name": name of the customer (string eg. "John Doe"),
-            "order_date": date of the order (string eg. "2024-04-06"),
-            "order_time": time of the order (string eg. "18:30:00"),
-            "order_items": items in the order (array of strings eg. ["item1", "item2"]),
-            "order_status": status of the order (string eg. "Delivered"),
-            "estimated_delivery": estimated delivery date (string eg. "2024-04-08"),
-            "payment_type": type of payment (string eg. "Credit Card"),
-            "coins_used": boolean indicating if coins were used for the order (boolean eg. true),
-            }
-        
-        Request Parameters:
-        If the Customer wants to know the status of their order, they must supply the order ID.
-      `;
-    const model = new OpenAI({
-      openAIApiKey: process.env.OPENAI_API_KEY,
-      modelName: "gpt-3.5-turbo-instruct",
-      temperature: 0,
+    const res = await chain.invoke({
+      question: "What is the customer name of order number 23599047 ?",
     });
-    const chain = APIChain.fromLLMAndAPIDocs(model, OrderDetails, {
-      headers: {},
-    });
-    const response = await chain.call({
-      question: "What is the Order Status of my order?",
-    });
-    console.log(response.output);
-    return NextResponse.json({ answer: response }, { status: 200 });
-  } catch (error) {
-    console.log("Error fetching order:", error);
-    return NextResponse.json(
-      { error: "An error occurred while fetching the order." },
-      { status: 500 }
-    );
+    return NextResponse.json({ res }, { status: 200 });
+  } catch (error: any) {
+    console.error("Error fetching order details:", error);
+    return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }
