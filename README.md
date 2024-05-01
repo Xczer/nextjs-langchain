@@ -26,4 +26,4 @@ You can access the following API routes:
 
 ## Deployment
 
-This project is deployed on Vercel. You can access the live version at [your-vercel-url](your-vercel-url).
+This project is deployed on Vercel. You can access the live version at [Vercel Link](https://nextjs-langchain-one.vercel.app/).
