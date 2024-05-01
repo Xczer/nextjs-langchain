@@ -68,9 +68,7 @@ export async function GET() {
   try {
     const model = new OpenAI({ model: "gpt-3.5-turbo-instruct" });
     const chain = APIChain.fromLLMAndAPIDocs(model, ORDERS_API_DOCS, {
-      headers: {
-        // These headers will be used for API requests made by the chain.
-      },
+      headers: {},
     });
 
     const res = await chain.invoke({
