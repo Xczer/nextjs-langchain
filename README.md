@@ -1,4 +1,4 @@
-# Project Name
+# NextJs Langchain
 
 ## Setup
 
